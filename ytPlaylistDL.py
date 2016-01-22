@@ -56,7 +56,7 @@ def downloadVideo(path, vid_url):
     try:
         yt = YouTube(vid_url)
     except Exception as e:
-        print("Error:", str(e), "- Skipping Video with url '"+vid_url+"'.")
+        print("Error:", e.reason, "- Skipping Video with url '"+vid_url+"'.")
         return
 
     video = yt.get('mp4', '720p')
@@ -79,7 +79,14 @@ if __name__ == '__main__':
         exit(1)
     else:
         url = sys.argv[1]
-        path = os.getcwd() if len(sys.argv) != 3 else sys.argv[2]
+        directory = os.getcwd() if len(sys.argv) != 3 else sys.argv[2]
+    
+        # make directory if dir specified doesn't exist
+        try:
+            os.makedirs(directory, exist_ok=True)
+        except OSError as e:
+            print(e.reason)
+            exit(1)
 
         if not url.startswith("http"):
             url = 'https://' + url
@@ -89,5 +96,5 @@ if __name__ == '__main__':
 
         # downloads videos
         for vid_url in vid_urls_in_playlist:
-            downloadVideo(path, vid_url)
+            downloadVideo(directory, vid_url)
             time.sleep(1)
