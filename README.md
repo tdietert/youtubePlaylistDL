@@ -7,7 +7,7 @@ A simple script to download all videos in a youtube playlist (720p quality)
 #####**This script needs Python 3.4.1+**
 
 ```bash
-$ pip install pytube
+$ pip3 install pytube
 ```
 
 ### Usage:
