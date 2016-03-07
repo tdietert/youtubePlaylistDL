@@ -59,7 +59,10 @@ def downloadVideo(path, vid_url):
         print("Error:", e.reason, "- Skipping Video with url '"+vid_url+"'.")
         return
 
-    video = yt.get('mp4', '720p')
+    try:  # Tries to find the video in 720p
+        video = yt.get('mp4', '720p')
+    except Exception:  # Sorts videos by resolution and picks the highest quality video if a 720p video doesn't exist
+        video = sorted(yt.filter("mp4"), key=lambda video: int(video.resolution[:-1]), reverse=True)[0]
 
     print("downloading",yt.filename+"...")
     try:
