@@ -8,6 +8,55 @@ import os
 
 from pytube import YouTube
 
+class progressBar:
+    def __init__(self, barlength=25):
+        self.barlength = barlength
+        self.position = 0
+        self.longest = 0
+
+    def print_progress(self, cur, total, start):
+        currentper = cur / total
+        elapsed = int(time.clock() - start) + 1
+        curbar = int(currentper * self.barlength)
+        bar = '\r[' + '='.join(['' for _ in range(curbar)])  # Draws Progress
+        bar += '>'
+        bar += ' '.join(['' for _ in range(int(self.barlength - curbar))]) + '] '  # Pads remaining space
+        bar += bytestostr(cur / elapsed) + '/s '  # Calculates Rate
+        bar += getHumanTime((total - cur) * (elapsed / cur)) + ' left'  # Calculates Remaining time
+        if len(bar) > self.longest:  # Keeps track of space to over write
+            self.longest = len(bar)
+            bar += ' '.join(['' for _ in range(self.longest - len(bar))])
+        sys.stdout.write(bar)
+
+    def print_end(self, *args):  # Clears Progress Bar
+        sys.stdout.write('\r{0}\r'.format((' ' for _ in range(self.longest))))
+
+def getHumanTime(sec):
+    if sec >= 3600:  # Converts to Hours
+        return '{0:d} hour(s)'.format(int(sec / 3600))
+    elif sec >= 60:  # Converts to Minutes
+        return '{0:d} minute(s)'.format(int(sec / 60))
+    else:            # No Conversion
+        return '{0:d} second(s)'.format(int(sec))
+
+def bytestostr(bts):
+    bts = float(bts)
+    if bts >= 1024 ** 4:    # Converts to Terabytes
+        terabytes = bts / 1024 ** 4
+        size = '%.2fTb' % terabytes
+    elif bts >= 1024 ** 3:  # Converts to Gigabytes
+        gigabytes = bts / 1024 ** 3
+        size = '%.2fGb' % gigabytes
+    elif bts >= 1024 ** 2:  # Converts to Megabytes
+        megabytes = bts / 1024 ** 2
+        size = '%.2fMb' % megabytes
+    elif bts >= 1024:       # Converts to Kilobytes
+        kilobytes = bts / 1024
+        size = '%.2fKb' % kilobytes
+    else:                   # No Conversion
+        size = '%.2fb' % bts
+    return size
+
 def getPageHtml(url):
     try:
         yTUBE = urllib.request.urlopen(url).read()
@@ -56,7 +105,7 @@ def downloadVideo(path, vid_url):
     try:
         yt = YouTube(vid_url)
     except Exception as e:
-        print("Error:", e.reason, "- Skipping Video with url '"+vid_url+"'.")
+        print("Error:", str(e), "- Skipping Video with url '"+vid_url+"'.")
         return
 
     try:  # Tries to find the video in 720p
@@ -64,10 +113,11 @@ def downloadVideo(path, vid_url):
     except Exception:  # Sorts videos by resolution and picks the highest quality video if a 720p video doesn't exist
         video = sorted(yt.filter("mp4"), key=lambda video: int(video.resolution[:-1]), reverse=True)[0]
 
-    print("downloading",yt.filename+"...")
+    print("downloading", yt.filename+"...")
     try:
-        video.download(path)
-        print("successfully downloaded", yt.filename,"!")
+        bar = progressBar()
+        video.download(path, on_progress=bar.print_progress, on_finish=bar.print_end)
+        print("successfully downloaded", yt.filename, "!")
     except OSError:
         print(yt.filename, "already exists in this directory! Skipping video...")
  
