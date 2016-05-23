@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import urllib.request
 import urllib.error
 
@@ -101,7 +103,11 @@ def getPlaylistVideoUrls(page_content, url):
         print('No videos found.')
         exit(1)
 
-def downloadVideo(path, vid_url):
+
+
+#function added to get audio files along with the video files from the playlist
+
+def download_Video_Audio(path, vid_url, file_no):
     try:
         yt = YouTube(vid_url)
     except Exception as e:
@@ -113,14 +119,26 @@ def downloadVideo(path, vid_url):
     except Exception:  # Sorts videos by resolution and picks the highest quality video if a 720p video doesn't exist
         video = sorted(yt.filter("mp4"), key=lambda video: int(video.resolution[:-1]), reverse=True)[0]
 
-    print("downloading", yt.filename+"...")
+    print("downloading", yt.filename+" Video and Audio...")
     try:
         bar = progressBar()
         video.download(path, on_progress=bar.print_progress, on_finish=bar.print_end)
         print("successfully downloaded", yt.filename, "!")
     except OSError:
         print(yt.filename, "already exists in this directory! Skipping video...")
+
+    try:
+        os.rename(yt.filename+'.mp4',str(file_no)+'.mp4')
+        aud= 'ffmpeg -i '+str(file_no)+'.mp4'+' '+str(file_no)+'.wav'
+        final_audio='lame '+str(file_no)+'.wav'+' '+str(file_no)+'.mp3'
+        os.system(aud)
+        os.system(final_audio)
+        os.remove(str(file_no)+'.wav')
+        print("sucessfully converted",yt.filename, "into audio!")
+    except OSError:
+        print(yt.filename, "There is some problem with the file names...")
  
+
 def printUrls(vid_urls):
     for url in vid_urls:
         print(url)
@@ -147,7 +165,7 @@ if __name__ == '__main__':
         playlist_page_content = getPageHtml(url)
         vid_urls_in_playlist = getPlaylistVideoUrls(playlist_page_content, url)
 
-        # downloads videos
-        for vid_url in vid_urls_in_playlist:
-            downloadVideo(directory, vid_url)
+        # downloads videos and audios
+        for i,vid_url in enumerate(vid_urls_in_playlist):
+            download_Video_Audio(directory, vid_url, i)
             time.sleep(1)
