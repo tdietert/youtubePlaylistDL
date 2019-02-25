@@ -103,10 +103,7 @@ def getPlaylistVideoUrls(page_content, url):
         print('No videos found.')
         exit(1)
 
-
-
 #function added to get audio files along with the video files from the playlist
-
 def download_Video_Audio(path, vid_url, file_no):
     try:
         yt = YouTube(vid_url)
@@ -115,28 +112,29 @@ def download_Video_Audio(path, vid_url, file_no):
         return
 
     try:  # Tries to find the video in 720p
-        video = yt.get('mp4', '720p')
+        #video = yt.get('mp4', '720p')
+        video = yt.streams.filter(progressive = True, file_extension = "mp4").first()
     except Exception:  # Sorts videos by resolution and picks the highest quality video if a 720p video doesn't exist
         video = sorted(yt.filter("mp4"), key=lambda video: int(video.resolution[:-1]), reverse=True)[0]
 
-    print("downloading", yt.filename+" Video and Audio...")
+        print("downloading", yt.title+" Video and Audio...")
     try:
         bar = progressBar()
-        video.download(path, on_progress=bar.print_progress, on_finish=bar.print_end)
-        print("successfully downloaded", yt.filename, "!")
+        video.download(path)
+        print("successfully downloaded", yt.title, "!")
     except OSError:
-        print(yt.filename, "already exists in this directory! Skipping video...")
+        print(yt.title, "already exists in this directory! Skipping video...")
 
     try:
-        os.rename(yt.filename+'.mp4',str(file_no)+'.mp4')
+        os.rename(yt.title+'.mp4',str(file_no)+'.mp4')
         aud= 'ffmpeg -i '+str(file_no)+'.mp4'+' '+str(file_no)+'.wav'
         final_audio='lame '+str(file_no)+'.wav'+' '+str(file_no)+'.mp3'
         os.system(aud)
         os.system(final_audio)
         os.remove(str(file_no)+'.wav')
-        print("sucessfully converted",yt.filename, "into audio!")
+        print("sucessfully converted",yt.title, "into audio!")
     except OSError:
-        print(yt.filename, "There is some problem with the file names...")
+        print(yt.title, "There is some problem with the file names...")
  
 
 def printUrls(vid_urls):
